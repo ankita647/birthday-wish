@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday!</title>
+    <style>
+        body {
+            text-align: center;
+            background-color: #ffebf0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+        #wish {
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 50px;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+        }
+        #balloons-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 50px;
+            flex-wrap: wrap;
+        }
+        .balloon {
+            width: 60px;
+            height: 80px;
+            background: radial-gradient(circle, #ff4d6d, #c70039);
+            border-radius: 50%;
+            position: relative;
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            animation: float 3s infinite ease-in-out alternate;
+        }
+        .balloon::after {
+            content: '';
+            width: 2px;
+            height: 30px;
+            background: black;
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .hidden {
+            display: none;
+        }
+        #cake-container {
+            margin-top: 50px;
+            opacity: 0;
+            animation: fadeIn 2s forwards;
+        }
+        #cake {
+            width: 200px;
+        }
+        #knife {
+            width: 80px;
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            cursor: grab;
+            display: none;
+        }
+        #confetti {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes float {
+            from { transform: translateY(0); }
+            to { transform: translateY(-20px); }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" src="https://www.myinstants.com/media/sounds/happy-birthday.mp3" autoplay loop></audio>
+
+    <div id="wish">🎉 Happy Birthday, My Love! 🎂❤️</div>
+    
+    <div id="balloons-container">
+        <div class="balloon"></div>
+        <div class="balloon"></div>
+        <div class="balloon"></div>
+        <div class="balloon"></div>
+        <div class="balloon"></div>
+    </div>
+    
+    <button id="cutCakeBtn" class="hidden">Cut the Cake 🎂</button>
+
+    <div id="cake-container" class="hidden">
+        <img id="cake" src="https://i.imgur.com/y0v2Xtf.png" alt="Cake">
+    </div>
+
+    <img id="knife" src="https://i.imgur.com/N7J6kG3.png" alt="Knife">
+
+    <canvas id="confetti"></canvas>
+
+    <script>
+        // Play music when the page loads
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("bg-music").play();
+        });
+
+        // Balloon popping logic
+        document.querySelectorAll(".balloon").forEach(balloon => {
+            balloon.addEventListener("click", function () {
+                this.style.transform = "scale(0)";
+                setTimeout(() => this.remove(), 200);
+                if (document.querySelectorAll(".balloon").length === 1) {
+                    document.getElementById("cutCakeBtn").classList.remove("hidden");
+                }
+            });
+        });
+
+        // Show cake and knife
+        document.getElementById("cutCakeBtn").addEventListener("click", function () {
+            document.getElementById("cake-container").classList.remove("hidden");
+            document.getElementById("knife").style.display = "block";
+            this.remove();
+        });// Knife movement for cake cutting
+        let knife = document.getElementById("knife");
+        let cake = document.getElementById("cake");
+        let isCut = false;
+
+        knife.addEventListener("mousedown", function () {
+            document.addEventListener("mousemove", moveKnife);
+        });
+
+        document.addEventListener("mouseup", function () {
+            document.removeEventListener("mousemove", moveKnife);
+        });
+
+        function moveKnife(e) {
+            knife.style.left = e.pageX + "px";
+            knife.style.top = e.pageY + "px";
+
+            let cakeRect = cake.getBoundingClientRect();
+            let knifeRect = knife.getBoundingClientRect();
+
+            if (
+                !isCut &&
+                knifeRect.right > cakeRect.left + 50 &&
+                knifeRect.left < cakeRect.right - 50 &&
+                knifeRect.bottom > cakeRect.top + 50 &&
+                knifeRect.top < cakeRect.bottom - 50
+            ) {
+                isCut = true;
+                cake.src = "https://i.imgur.com/VvNYSHc.png"; // Cut cake image
+                startConfetti();
+                setTimeout(() => alert("Cake cut successfully! 🎉"), 500);
+            }
+        }
+
+        // Confetti Effect
+        function startConfetti() {
+            let canvas = document.getElementById("confetti");
+            let ctx = canvas.getContext("2d");
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.style.display = "block";
+
+            let particles = [];
+            for (let i = 0; i < 100; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 5 + 2,
+                    d: Math.random() * 5
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = "#ff0";
+                ctx.beginPath();
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    ctx.moveTo(p.x, p.y);
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, true);
+                }
+                ctx.fill();
+                update();
+            }
+
+            function update() {
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    p.y += p.d;
+                    if (p.y > canvas.height) {
+                        p.y = 0;
+                    }
+                }
+            }
+
+            function animate() {
+                draw();
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+            setTimeout(() => {
+                canvas.style.display = "none";
+            }, 5000);
+        }
+    </script>
+
+</body>
+</html>
